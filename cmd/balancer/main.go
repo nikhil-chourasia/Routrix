@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"log"
 	"net/http"
 	"fmt"
@@ -22,15 +23,23 @@ func startDummyBackend(port string) {
 }
 
 func main() {
-	//Start
-	startDummyBackend("9001")
-	startDummyBackend("9002")	
-	startDummyBackend("9003")	
+	mode := os.Getenv("LB_MODE")
+	if mode == "" {
+		mode = "L7"
+	}
 
-//backend pool
-pool := core.NewServerPool()
-pool.AddServer(&core.Backend{Address: "localhost:9001", Alive:true})
-pool.AddServer(&core.Backend{Address: "localhost:9002", Alive:true})
-pool.AddServer(&core.Backend{Address: "localhost:9003", Alive:true})
-log.Println("added 3 servers")
+	// Start dummy backends
+	startDummyBackend("9001")
+	startDummyBackend("9002")
+	startDummyBackend("9003")
+
+	// Backend pool (THREAD SAFE)
+	// --------------------------------------------------
+	pool := core.NewServerPool()
+	pool.AddServer(&core.Backend{Address: "localhost:9001", Alive: true})
+	pool.AddServer(&core.Backend{Address: "localhost:9002", Alive: true})
+	pool.AddServer(&core.Backend{Address: "localhost:9003", Alive: true})
+
+
+	select {}
 }
